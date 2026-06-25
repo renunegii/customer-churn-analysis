@@ -62,3 +62,76 @@ SELECT State, COUNT(State) AS TotalCount,
 FROM stg_Churn
 GROUP BY State
 ORDER BY Percentage DESC;
+
+-- Check Empty string/Nulls in Data
+SELECT 
+    SUM(CASE WHEN Value_Deal = '' THEN 1 ELSE 0 END) AS Empty_String_Count,
+    SUM(CASE WHEN Value_Deal IS NULL THEN 1 ELSE 0 END) AS True_Null_Count,
+    COUNT(*) AS Total_Rows
+FROM stg_Churn;
+
+-- Count Empty string/Nulls
+SELECT 
+    SUM(CASE WHEN Value_Deal IS NULL OR Value_Deal = '' THEN 1 ELSE 0 END) AS Value_Deal_Null_Count,
+    SUM(CASE WHEN Multiple_Lines IS NULL OR Multiple_Lines = '' THEN 1 ELSE 0 END) AS Multiple_Lines_Null_Count,
+    SUM(CASE WHEN Internet_Type IS NULL OR Internet_Type = '' THEN 1 ELSE 0 END) AS Internet_Type_Null_Count,
+    SUM(CASE WHEN Online_Security IS NULL OR Online_Security = '' THEN 1 ELSE 0 END) AS Online_Security_Null_Count,
+    SUM(CASE WHEN Online_Backup IS NULL OR Online_Backup = '' THEN 1 ELSE 0 END) AS Online_Backup_Null_Count,
+    SUM(CASE WHEN Device_Protection_Plan IS NULL OR Device_Protection_Plan = '' THEN 1 ELSE 0 END) AS Device_Protection_Plan_Null_Count,
+    SUM(CASE WHEN Premium_Support IS NULL OR Premium_Support = '' THEN 1 ELSE 0 END) AS Premium_Support_Null_Count,
+    SUM(CASE WHEN Streaming_TV IS NULL OR Streaming_TV = '' THEN 1 ELSE 0 END) AS Streaming_TV_Null_Count,
+    SUM(CASE WHEN Streaming_Movies IS NULL OR Streaming_Movies = '' THEN 1 ELSE 0 END) AS Streaming_Movies_Null_Count,
+    SUM(CASE WHEN Streaming_Music IS NULL OR Streaming_Music = '' THEN 1 ELSE 0 END) AS Streaming_Music_Null_Count,
+    SUM(CASE WHEN Unlimited_Data IS NULL OR Unlimited_Data = '' THEN 1 ELSE 0 END) AS Unlimited_Data_Null_Count,
+    SUM(CASE WHEN Churn_Category IS NULL OR Churn_Category = '' THEN 1 ELSE 0 END) AS Churn_Category_Null_Count,
+    SUM(CASE WHEN Churn_Reason IS NULL OR Churn_Reason = '' THEN 1 ELSE 0 END) AS Churn_Reason_Null_Count
+FROM stg_Churn;
+
+-- Converting Empty strings into Nulls and then filling all the missing values accordingly
+DROP TABLE IF EXISTS prod_Churn;
+CREATE TABLE prod_Churn AS
+SELECT 
+    Customer_ID,
+    Gender,
+    Age,
+    Married,
+    State,
+    Number_of_Referrals,
+    Tenure_in_Months,
+    IFNULL(NULLIF(Value_Deal, ''), 'No Deal') AS Value_Deal,
+    Phone_Service,
+    IFNULL(NULLIF(Multiple_Lines, ''), 'No Phone Service') AS Multiple_Lines,
+    Internet_Service,
+    IFNULL(NULLIF(Internet_Type, ''), 'No Internet Service') AS Internet_Type,
+    IFNULL(NULLIF(Online_Security, ''), 'No Internet Service') AS Online_Security,
+    IFNULL(NULLIF(Online_Backup, ''), 'No Internet Service') AS Online_Backup,
+    IFNULL(NULLIF(Device_Protection_Plan, ''), 'No Internet Service') AS Device_Protection_Plan,
+    IFNULL(NULLIF(Premium_Support, ''), 'No Internet Service') AS Premium_Support,
+    IFNULL(NULLIF(Streaming_TV, ''), 'No Internet Service') AS Streaming_TV,
+    IFNULL(NULLIF(Streaming_Movies, ''), 'No Internet Service') AS Streaming_Movies,
+    IFNULL(NULLIF(Streaming_Music, ''), 'No Internet Service') AS Streaming_Music,
+    IFNULL(NULLIF(Unlimited_Data, ''), 'No Internet Service') AS Unlimited_Data,
+    Contract,
+    Paperless_Billing,
+    Payment_Method,
+    ABS(Monthly_Charge) AS Monthly_Charge,
+    Total_Charges,
+    Total_Refunds,
+    Total_Extra_Data_Charges,
+    Total_Long_Distance_Charges,
+    Total_Revenue,
+    Customer_Status,
+    IFNULL(NULLIF(Churn_Category, ''), 'Not Applicable') AS Churn_Category,
+    IFNULL(NULLIF(Churn_Reason, ''), 'Not Applicable') AS Churn_Reason
+FROM stg_Churn;
+ALTER TABLE prod_Churn ADD PRIMARY KEY (Customer_ID);
+
+-- Final Check if exists any missing value in data
+SELECT 
+  SUM(Value_Deal = '') AS empty_value_deal,
+  SUM(Online_Security = '') AS empty_security,
+  SUM(Churn_Category = '') AS empty_churn_cat,
+  SUM(Monthly_Charge < 0) AS still_negative,
+  COUNT(*) AS total_rows
+FROM prod_Churn;
+
